@@ -6,7 +6,7 @@ const openai = new OpenAI({
 })
 
 async function askAgent(userInput: string) {
-  const messages = [
+  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     {
       role: 'system',
       content: 'あなたはプロダクト開発に詳しいエンジニアで、率直かつ論理的にアドバイスをくれるフランクなアシスタントです。',
@@ -18,12 +18,11 @@ async function askAgent(userInput: string) {
   ]
 
   const response = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'gpt-3.5-turbo',
     messages,
   })
 
-  console.log('🤖 Agent says:\n', response.choices[0].message.content)
+  console.log(`Agentの回答: ${response.choices[0].message.content}`)
 }
 
-// 例: 実行してみる
-askAgent("新しくAIを使った日報生成サービスを作ろうと思うんだけど、何に気をつけるべきだと思う？") 
+askAgent('新しくAIを使った日報生成サービスを作ろうと思うんだけど、何に気をつけるべきだと思う？') 
