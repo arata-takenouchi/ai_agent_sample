@@ -93,4 +93,149 @@
 
 .sendButton:hover {
   background-color: #0073e6;
+}
+
+.layout {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #f5f5f5;
+  border-right: 1px solid #e0e0e0;
+  padding: 20px 10px;
+  overflow-y: auto;
+  height: 100%;
+  transition: transform 0.3s ease;
+}
+
+.main {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.newChatButton {
+  width: 100%;
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
+
+.newChatButton:hover {
+  background-color: #45a049;
+}
+
+.conversationList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.conversationItem {
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.conversationItem:hover {
+  background-color: #e0e0e0;
+}
+
+.activeConversation {
+  background-color: #e0e0e0;
+  font-weight: bold;
+}
+
+.conversationTitle {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversationActions {
+  display: flex;
+  gap: 5px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.conversationItem:hover .conversationActions {
+  opacity: 1;
+}
+
+.editButton, .deleteButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+
+.editButton:hover {
+  background-color: #ddd;
+}
+
+.deleteButton:hover {
+  background-color: #ffcccc;
+}
+
+.titleInput {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+}
+
+/* モバイル対応 */
+.sidebarToggle {
+  display: none;
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 999;
+    transform: translateX(-100%);
+  }
+  
+  .sidebarVisible {
+    transform: translateX(0);
+  }
+  
+  .sidebarToggle {
+    display: block;
+  }
+  
+  .main {
+    padding-top: 60px;
+  }
 } 
