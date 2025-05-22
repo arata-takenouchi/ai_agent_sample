@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import Head from 'next/head';
-import styles from '../styles/Home.module.css';
 import { 
   Conversation, 
   Message as DBMessage, 
@@ -11,6 +10,14 @@ import {
   deleteConversation,
   updateConversationTitle
 } from '../utils/indexedDB';
+
+// shadcn/uiコンポーネントのインポート
+import { Button } from "../components/ui/button";
+import { Textarea } from "../components/ui/textarea";
+import { Input } from "../components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { Separator } from "../components/ui/separator";
 
 type Message = {
   content: string;
@@ -226,7 +233,7 @@ export default function Home() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Head>
         <title>AIエージェントチャット</title>
         <meta name="description" content="AIエージェントとチャットできるアプリケーション" />
@@ -234,105 +241,138 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className={styles.layout}>
+      <div className="flex h-screen overflow-hidden">
         {/* サイドバートグルボタン（モバイル用） */}
-        <button 
-          className={styles.sidebarToggle}
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed top-4 left-4 z-50 md:hidden"
           onClick={() => setShowSidebar(!showSidebar)}
         >
           {showSidebar ? '×' : '≡'}
-        </button>
+        </Button>
         
         {/* サイドバー */}
-        <div className={`${styles.sidebar} ${showSidebar ? styles.sidebarVisible : ''}`}>
-          <button 
-            className={styles.newChatButton}
-            onClick={handleNewConversation}
-          >
-            + 新しい会話
-          </button>
-          
-          <div className={styles.conversationList}>
-            {conversations.map(conv => (
-              <div 
-                key={conv.id}
-                className={`${styles.conversationItem} ${currentConversationId === conv.id ? styles.activeConversation : ''}`}
-                onClick={() => handleSelectConversation(conv.id)}
-              >
-                {editingTitle && editingTitle.id === conv.id ? (
-                  <input
-                    type="text"
-                    value={editingTitle.title}
-                    onChange={(e) => setEditingTitle({ ...editingTitle, title: e.target.value })}
-                    onKeyDown={handleUpdateTitle}
-                    autoFocus
-                    onClick={(e) => e.stopPropagation()}
-                    className={styles.titleInput}
-                  />
-                ) : (
-                  <>
-                    <span className={styles.conversationTitle}>{conv.title}</span>
-                    <div className={styles.conversationActions}>
-                      <button 
-                        className={styles.editButton}
-                        onClick={(e) => handleStartEditTitle(conv.id, conv.title, e)}
-                      >
-                        ✎
-                      </button>
-                      <button 
-                        className={styles.deleteButton}
-                        onClick={(e) => handleDeleteConversation(conv.id, e)}
-                      >
-                        🗑
-                      </button>
-                    </div>
-                  </>
-                )}
+        <div className={`w-72 bg-slate-800 text-slate-100 h-screen transition-transform duration-300 ease-in-out ${
+          showSidebar ? 'translate-x-0' : '-translate-x-full'
+        } md:translate-x-0 fixed md:relative z-40`}>
+          <div className="p-4 flex flex-col h-full">
+            <Button 
+              className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700"
+              onClick={handleNewConversation}
+            >
+              + 新しい会話
+            </Button>
+            
+            <ScrollArea className="flex-1 pr-3">
+              <div className="space-y-2">
+                {conversations.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`p-2 rounded-md cursor-pointer flex items-center justify-between group ${
+                      currentConversationId === conv.id ? 'bg-slate-700' : 'hover:bg-slate-700/50'
+                    }`}
+                    onClick={() => handleSelectConversation(conv.id)}
+                  >
+                    {editingTitle && editingTitle.id === conv.id ? (
+                      <Input
+                        value={editingTitle.title}
+                        onChange={(e) => setEditingTitle({ ...editingTitle, title: e.target.value })}
+                        onKeyDown={handleUpdateTitle}
+                        autoFocus
+                        className="w-full bg-slate-600 text-slate-100 border-slate-500"
+                      />
+                    ) : (
+                      <>
+                        <span className="truncate flex-1">{conv.title}</span>
+                        <div className="opacity-0 group-hover:opacity-100 flex space-x-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-300 hover:text-slate-100 hover:bg-slate-600"
+                            onClick={(e) => handleStartEditTitle(conv.id, conv.title, e)}
+                          >
+                            ✎
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-slate-300 hover:text-red-400 hover:bg-slate-600"
+                            onClick={(e) => handleDeleteConversation(conv.id, e)}
+                          >
+                            🗑
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            </ScrollArea>
           </div>
         </div>
         
         {/* メインコンテンツ */}
-        <main className={styles.main}>
-          <h1 className={styles.title}>AIエージェントチャット</h1>
+        <main className="flex-1 flex flex-col h-screen overflow-hidden">
+          <CardHeader className="border-b bg-white dark:bg-slate-800 shadow-sm">
+            <CardTitle className="text-center text-xl">AIエージェントチャット</CardTitle>
+          </CardHeader>
           
-          <div className={styles.chatContainer}>
-            <div className={styles.chatMessages}>
-              {messages.map((msg, index) => (
-                <div 
-                  key={index} 
-                  className={`${styles.message} ${
-                    msg.sender === 'user' ? styles.userMessage : styles.agentMessage
-                  }`}
-                >
-                  {msg.content}
-                </div>
-              ))}
-              {isTyping && (
-                <div className={styles.typingIndicator}>
-                  相談役が考え中...
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+          <Card className="flex-1 flex flex-col border-0 rounded-none">
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4 pb-4">
+                {messages.map((msg, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                      msg.sender === 'user' 
+                        ? 'bg-blue-600 text-white rounded-br-none' 
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-bl-none'
+                    }`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isTyping && (
+                  <div className="flex justify-start">
+                    <div className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-2xl px-4 py-3 rounded-bl-none flex items-center">
+                      相談役が考え中...
+                      <span className="ml-2 flex space-x-1">
+                        <span className="animate-bounce delay-0 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
+                        <span className="animate-bounce delay-150 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
+                        <span className="animate-bounce delay-300 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
             
-            <div className={styles.chatInput}>
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="メッセージを入力..."
-                className={styles.messageInput}
-              />
-              <button 
-                onClick={handleSendMessage}
-                className={styles.sendButton}
-              >
-                送信
-              </button>
-            </div>
-          </div>
+            <CardFooter className="border-t p-4 bg-white dark:bg-slate-800">
+              <div className="flex w-full items-end gap-2">
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="メッセージを入力..."
+                  className="flex-1 min-h-[60px] max-h-[200px] resize-none"
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  className="bg-blue-600 hover:bg-blue-700"
+                  size="icon"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m22 2-7 20-4-9-9-4Z"/>
+                    <path d="M22 2 11 13"/>
+                  </svg>
+                </Button>
+              </div>
+            </CardFooter>
+          </Card>
         </main>
       </div>
     </div>
