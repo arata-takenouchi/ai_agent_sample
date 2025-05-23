@@ -315,7 +315,11 @@ export default function Home() {
         {/* メインコンテンツ */}
         <main className="flex-1 flex flex-col h-screen overflow-hidden">
           <CardHeader className="border-b bg-white dark:bg-slate-800 shadow-sm">
-            <CardTitle className="text-center text-xl">AIエージェントチャット</CardTitle>
+            <CardTitle className="text-center text-2xl font-extrabold tracking-tight flex items-center justify-center gap-2">
+              <span className="inline-block bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow">
+                <span className="align-middle">🤖</span> AIエージェントチャット
+              </span>
+            </CardTitle>
           </CardHeader>
           
           <Card className="flex-1 flex flex-col border-0 rounded-none">
