@@ -170,8 +170,10 @@ export default function Home() {
   const handleSendMessage = async () => {
     if (!input.trim() || !currentConversationId) return;
 
+    const messageToSend = input; // ここで退避
+
     // ユーザーメッセージを追加
-    const userMessage = { content: input, sender: 'user' as const };
+    const userMessage = { content: messageToSend, sender: 'user' as const };
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
@@ -186,7 +188,7 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input, model }), // ← modelも送信
+        body: JSON.stringify({ message: messageToSend, model }), // 退避した値を使う
       });
 
       const data = await response.json();
@@ -320,7 +322,7 @@ export default function Home() {
         </div>
         
         {/* メインコンテンツ */}
-        <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        <main className="flex-1 flex flex-col h-screen overflow-hidden pr-64">
           <CardHeader className="border-b bg-white dark:bg-slate-800 shadow-sm">
             <CardTitle className="text-center text-2xl font-extrabold tracking-tight flex items-center justify-center gap-2">
               <span className="inline-block bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow">
