@@ -26,7 +26,7 @@ export default async function handler(
   }
 
   try {
-    const { message } = req.body;
+    const { message, model } = req.body;
     
     // ユーザーメッセージを履歴に追加
     chatHistory.push({
@@ -36,7 +36,7 @@ export default async function handler(
 
     // OpenAI APIを呼び出し
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: model || 'gpt-3.5-turbo',
       messages: chatHistory,
     });
 

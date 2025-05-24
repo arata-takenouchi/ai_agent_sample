@@ -24,6 +24,12 @@ type Message = {
   sender: 'user' | 'agent';
 };
 
+// 追加: モデル選択用の型
+const MODEL_OPTIONS = [
+  { label: "GPT-3.5", value: "gpt-3.5-turbo" },
+  { label: "GPT-4", value: "gpt-4" },
+];
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     { content: 'よう、兄弟！何か相談したいことがあるなら、遠慮なく言ってくれ！', sender: 'agent' }
@@ -35,6 +41,7 @@ export default function Home() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [editingTitle, setEditingTitle] = useState<{ id: number; title: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [model, setModel] = useState("gpt-3.5-turbo"); // 追加
 
   // 初期化時に会話履歴を読み込む
   useEffect(() => {
@@ -173,13 +180,13 @@ export default function Home() {
       // メッセージをIndexedDBに保存
       await addMessageToConversation(currentConversationId, userMessage);
       
-      // APIにメッセージを送信
+      // APIにメッセージとモデルを送信
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message: input, model }), // ← modelも送信
       });
 
       const data = await response.json();
@@ -378,6 +385,29 @@ export default function Home() {
             </CardFooter>
           </Card>
         </main>
+
+        {/* 右サイドパネル */}
+        <div className="w-64 bg-white dark:bg-slate-900 border-l h-screen flex flex-col p-6 fixed right-0 top-0 z-40">
+          <h2 className="text-lg font-bold mb-4">設定</h2>
+          <div>
+            <label className="block text-sm font-medium mb-2">エージェントモデル</label>
+            <div className="space-y-2">
+              {MODEL_OPTIONS.map(opt => (
+                <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="model"
+                    value={opt.value}
+                    checked={model === opt.value}
+                    onChange={() => setModel(opt.value)}
+                    className="accent-blue-600"
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
