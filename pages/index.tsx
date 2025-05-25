@@ -42,6 +42,7 @@ export default function Home() {
   const [editingTitle, setEditingTitle] = useState<{ id: number; title: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [model, setModel] = useState("gpt-3.5-turbo"); // 追加
+  const [subAgents, setSubAgents] = useState<string[]>([]);
 
   // 初期化時に会話履歴を読み込む
   useEffect(() => {
@@ -241,6 +242,18 @@ export default function Home() {
     }
   };
 
+  // サブエージェント追加
+  const handleAddSubAgent = () => {
+    if (subAgents.length < 2) {
+      setSubAgents([...subAgents, `サブエージェント${subAgents.length + 1}`]);
+    }
+  };
+
+  // サブエージェント削除
+  const handleRemoveSubAgent = (index: number) => {
+    setSubAgents(subAgents.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Head>
@@ -393,7 +406,7 @@ export default function Home() {
           <h2 className="text-lg font-bold mb-4">設定</h2>
           <div>
             <label className="block text-sm font-medium mb-2">エージェントモデル</label>
-            <div className="space-y-2">
+            <div className="space-y-2 mb-6">
               {MODEL_OPTIONS.map(opt => (
                 <label key={opt.value} className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -406,6 +419,35 @@ export default function Home() {
                   />
                   <span>{opt.label}</span>
                 </label>
+              ))}
+            </div>
+            <div className="mb-2 flex items-center justify-between">
+              <span className="block text-sm font-medium">サブエージェント</span>
+              <Button
+                size="sm"
+                className="ml-2"
+                onClick={handleAddSubAgent}
+                disabled={subAgents.length >= 2}
+              >
+                ＋追加
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {subAgents.length === 0 && (
+                <div className="text-xs text-slate-400">サブエージェントはありません</div>
+              )}
+              {subAgents.map((name, idx) => (
+                <div key={idx} className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 rounded px-2 py-1">
+                  <span>{name}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900"
+                    onClick={() => handleRemoveSubAgent(idx)}
+                  >
+                    ×
+                  </Button>
+                </div>
               ))}
             </div>
           </div>
