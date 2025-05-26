@@ -30,6 +30,11 @@ const MODEL_OPTIONS = [
   { label: "GPT-4", value: "gpt-4" },
 ];
 
+type SubAgent = {
+  name: string;
+  mode: 'handoff' | 'tool';
+};
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([
     { content: 'よう、兄弟！何か相談したいことがあるなら、遠慮なく言ってくれ！', sender: 'agent' }
@@ -42,7 +47,9 @@ export default function Home() {
   const [editingTitle, setEditingTitle] = useState<{ id: number; title: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [model, setModel] = useState("gpt-3.5-turbo"); // 追加
-  const [subAgents, setSubAgents] = useState<string[]>([]);
+  const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
+  const [editingSubAgentIndex, setEditingSubAgentIndex] = useState<number | null>(null);
+  const [editingSubAgentName, setEditingSubAgentName] = useState<string>('');
 
   // 初期化時に会話履歴を読み込む
   useEffect(() => {
@@ -171,7 +178,7 @@ export default function Home() {
   const handleSendMessage = async () => {
     if (!input.trim() || !currentConversationId) return;
 
-    const messageToSend = input; // ここで退避
+    const messageToSend = input;
 
     // ユーザーメッセージを追加
     const userMessage = { content: messageToSend, sender: 'user' as const };
@@ -182,14 +189,14 @@ export default function Home() {
     try {
       // メッセージをIndexedDBに保存
       await addMessageToConversation(currentConversationId, userMessage);
-      
-      // APIにメッセージとモデルを送信
+
+      // APIにメッセージ・モデル・サブエージェント設定を送信
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: messageToSend, model }), // 退避した値を使う
+        body: JSON.stringify({ message: messageToSend, model, subAgents }),
       });
 
       const data = await response.json();
@@ -245,13 +252,41 @@ export default function Home() {
   // サブエージェント追加
   const handleAddSubAgent = () => {
     if (subAgents.length < 2) {
-      setSubAgents([...subAgents, `サブエージェント${subAgents.length + 1}`]);
+      setSubAgents([...subAgents, { name: `サブエージェント${subAgents.length + 1}`, mode: 'handoff' }]);
     }
   };
 
   // サブエージェント削除
   const handleRemoveSubAgent = (index: number) => {
     setSubAgents(subAgents.filter((_, i) => i !== index));
+  };
+
+  // サブエージェント名編集開始
+  const handleStartEditSubAgentName = (index: number) => {
+    setEditingSubAgentIndex(index);
+    setEditingSubAgentName(subAgents[index].name);
+  };
+
+  // サブエージェント名編集確定
+  const handleEditSubAgentName = (index: number) => {
+    setSubAgents(subAgents.map((agent, i) =>
+      i === index ? { ...agent, name: editingSubAgentName } : agent
+    ));
+    setEditingSubAgentIndex(null);
+    setEditingSubAgentName('');
+  };
+
+  // サブエージェント名編集キャンセル
+  const handleCancelEditSubAgentName = () => {
+    setEditingSubAgentIndex(null);
+    setEditingSubAgentName('');
+  };
+
+  // サブエージェントのモード変更
+  const handleChangeSubAgentMode = (index: number, mode: 'handoff' | 'tool') => {
+    setSubAgents(subAgents.map((agent, i) =>
+      i === index ? { ...agent, mode } : agent
+    ));
   };
 
   return (
@@ -436,17 +471,62 @@ export default function Home() {
               {subAgents.length === 0 && (
                 <div className="text-xs text-slate-400">サブエージェントはありません</div>
               )}
-              {subAgents.map((name, idx) => (
-                <div key={idx} className="flex items-center justify-between bg-slate-100 dark:bg-slate-800 rounded px-2 py-1">
-                  <span>{name}</span>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-red-500 hover:bg-red-100 dark:hover:bg-red-900"
-                    onClick={() => handleRemoveSubAgent(idx)}
-                  >
-                    ×
-                  </Button>
+              {subAgents.map((agent, idx) => (
+                <div key={idx} className="flex flex-col gap-1 bg-slate-100 dark:bg-slate-800 rounded px-2 py-1">
+                  <div className="flex items-center justify-between">
+                    {editingSubAgentIndex === idx ? (
+                      <>
+                        <input
+                          className="border rounded px-1 py-0.5 text-sm w-24"
+                          value={editingSubAgentName}
+                          onChange={e => setEditingSubAgentName(e.target.value)}
+                          onBlur={() => handleEditSubAgentName(idx)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleEditSubAgentName(idx);
+                            if (e.key === 'Escape') handleCancelEditSubAgentName();
+                          }}
+                          autoFocus
+                        />
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-gray-400"
+                          onClick={handleCancelEditSubAgentName}
+                        >×</Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-medium">{agent.name}</span>
+                        <div className="flex gap-1">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-blue-500"
+                            onClick={() => handleStartEditSubAgentName(idx)}
+                            title="名前を編集"
+                          >✎</Button>
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="text-red-500"
+                            onClick={() => handleRemoveSubAgent(idx)}
+                            title="削除"
+                          >×</Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs">モード:</span>
+                    <select
+                      className="border rounded px-1 py-0.5 text-xs"
+                      value={agent.mode}
+                      onChange={e => handleChangeSubAgentMode(idx, e.target.value as 'handoff' | 'tool')}
+                    >
+                      <option value="handoff">handoff</option>
+                      <option value="tool">tool (OpenAI SDK)</option>
+                    </select>
+                  </div>
                 </div>
               ))}
             </div>

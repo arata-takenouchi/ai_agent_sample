@@ -26,7 +26,7 @@ export default async function handler(
   }
 
   try {
-    const { message, model } = req.body;
+    const { message, model, subAgents } = req.body;
     
     // ユーザーメッセージを履歴に追加
     chatHistory.push({
