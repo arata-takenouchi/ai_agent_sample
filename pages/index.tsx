@@ -1,41 +1,38 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import Head from 'next/head';
 import { 
-  Conversation, 
-  Message as DBMessage, 
-  createConversation, 
-  getAllConversations, 
-  getConversation, 
+  Conversation,
+  createConversation,
+  getAllConversations,
+  getConversation,
   addMessageToConversation,
   deleteConversation,
   updateConversationTitle
 } from '../utils/indexedDB';
-
 // shadcn/uiコンポーネントのインポート
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Input } from "../components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
+import { Card, CardHeader, CardTitle, CardFooter } from "../components/ui/card";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Separator } from "../components/ui/separator";
 
 type Message = {
   content: string;
   sender: 'user' | 'agent';
 };
 
-// 追加: モデル選択用の型
-const MODEL_OPTIONS = [
-  { label: "GPT-3.5", value: "gpt-3.5-turbo" },
-  { label: "GPT-4", value: "gpt-4" },
-];
-
 type SubAgent = {
   name: string;
   mode: 'handoff' | 'tool';
 };
 
+const MODEL_OPTIONS = [
+  { label: "GPT-3.5", value: "gpt-3.5-turbo" },
+  { label: "GPT-4", value: "gpt-4" },
+];
+
 export default function Home() {
+  // State管理
   const [messages, setMessages] = useState<Message[]>([
     { content: 'よう、兄弟！何か相談したいことがあるなら、遠慮なく言ってくれ！', sender: 'agent' }
   ]);
@@ -45,11 +42,12 @@ export default function Home() {
   const [currentConversationId, setCurrentConversationId] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const [editingTitle, setEditingTitle] = useState<{ id: number; title: string } | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [model, setModel] = useState("gpt-3.5-turbo"); // 追加
+  const [model, setModel] = useState("gpt-3.5-turbo");
   const [subAgents, setSubAgents] = useState<SubAgent[]>([]);
   const [editingSubAgentIndex, setEditingSubAgentIndex] = useState<number | null>(null);
   const [editingSubAgentName, setEditingSubAgentName] = useState<string>('');
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 初期化時に会話履歴を読み込む
   useEffect(() => {
@@ -58,16 +56,12 @@ export default function Home() {
         const allConversations = await getAllConversations();
         setConversations(allConversations);
         
-        // 会話がない場合は新しい会話を作成
         if (allConversations.length === 0) {
           const newId = await createConversation();
           setCurrentConversationId(newId);
-          
-          // 新しい会話を読み込む
           const newConversations = await getAllConversations();
           setConversations(newConversations);
         } else {
-          // 最新の会話を選択
           setCurrentConversationId(allConversations[0].id);
           setMessages(allConversations[0].messages.map(m => ({
             content: m.content,
@@ -87,7 +81,7 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 新しい会話を作成
+  // 会話管理関数
   const handleNewConversation = async () => {
     try {
       const newId = await createConversation();
@@ -96,7 +90,6 @@ export default function Home() {
         { content: 'よう、兄弟！何か相談したいことがあるなら、遠慮なく言ってくれ！', sender: 'agent' }
       ]);
       
-      // 会話リストを更新
       const updatedConversations = await getAllConversations();
       setConversations(updatedConversations);
     } catch (error) {
@@ -104,7 +97,6 @@ export default function Home() {
     }
   };
 
-  // 会話を選択
   const handleSelectConversation = async (id: number) => {
     try {
       const conversation = await getConversation(id);
@@ -120,24 +112,19 @@ export default function Home() {
     }
   };
 
-  // 会話を削除
   const handleDeleteConversation = async (id: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // 親要素のクリックイベントを停止
+    e.stopPropagation();
     
     if (window.confirm('この会話を削除してもよろしいですか？')) {
       try {
         await deleteConversation(id);
-        
-        // 会話リストを更新
         const updatedConversations = await getAllConversations();
         setConversations(updatedConversations);
         
-        // 削除した会話が現在選択されている場合は、別の会話を選択
         if (id === currentConversationId) {
           if (updatedConversations.length > 0) {
             handleSelectConversation(updatedConversations[0].id);
           } else {
-            // 会話がない場合は新しい会話を作成
             handleNewConversation();
           }
         }
@@ -147,80 +134,55 @@ export default function Home() {
     }
   };
 
-  // タイトル編集モードを開始
   const handleStartEditTitle = (id: number, title: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // 親要素のクリックイベントを停止
+    e.stopPropagation();
     setEditingTitle({ id, title });
   };
 
-  // タイトルを更新
   const handleUpdateTitle = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && editingTitle) {
       e.preventDefault();
       try {
         await updateConversationTitle(editingTitle.id, editingTitle.title);
-        
-        // 会話リストを更新
         const updatedConversations = await getAllConversations();
         setConversations(updatedConversations);
-        
-        // 編集モードを終了
         setEditingTitle(null);
       } catch (error) {
         console.error('タイトルの更新に失敗しました:', error);
       }
-    } else if (e.key === 'Escape') {
-      // 編集をキャンセル
-      setEditingTitle(null);
     }
   };
 
+  // メッセージ送信
   const handleSendMessage = async () => {
     if (!input.trim() || !currentConversationId) return;
 
     const messageToSend = input;
-
-    // ユーザーメッセージを追加
     const userMessage = { content: messageToSend, sender: 'user' as const };
+    
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
 
     try {
-      // メッセージをIndexedDBに保存
       await addMessageToConversation(currentConversationId, userMessage);
 
-      // APIにメッセージ・モデル・サブエージェント設定を送信
       const response = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: messageToSend, model, subAgents }),
       });
 
       const data = await response.json();
-      
-      // 入力中表示を非表示
       setIsTyping(false);
       
-      // エージェントの返答を追加
-      let agentMessage: Message;
-      if (data.reply) {
-        agentMessage = { content: data.reply, sender: 'agent' };
-      } else {
-        agentMessage = { 
-          content: 'エラーが発生しました。もう一度お試しください。', 
-          sender: 'agent' 
-        };
-      }
+      const agentMessage: Message = data.reply 
+        ? { content: data.reply, sender: 'agent' }
+        : { content: 'エラーが発生しました。もう一度お試しください。', sender: 'agent' };
       
       setMessages(prev => [...prev, agentMessage]);
-      
-      // エージェントの返答をIndexedDBに保存
       await addMessageToConversation(currentConversationId, agentMessage);
       
-      // 会話リストを更新（タイトルが更新された可能性があるため）
       const updatedConversations = await getAllConversations();
       setConversations(updatedConversations);
     } catch (error) {
@@ -234,7 +196,6 @@ export default function Home() {
       
       setMessages(prev => [...prev, errorMessage]);
       
-      // エラーメッセージをIndexedDBに保存
       if (currentConversationId) {
         await addMessageToConversation(currentConversationId, errorMessage);
       }
@@ -242,32 +203,28 @@ export default function Home() {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    // Command(Mac)またはCtrl(Windows)キーが押されている状態でEnterが押された場合に送信
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  // サブエージェント追加
+  // サブエージェント管理関数
   const handleAddSubAgent = () => {
     if (subAgents.length < 2) {
       setSubAgents([...subAgents, { name: `サブエージェント${subAgents.length + 1}`, mode: 'handoff' }]);
     }
   };
 
-  // サブエージェント削除
   const handleRemoveSubAgent = (index: number) => {
     setSubAgents(subAgents.filter((_, i) => i !== index));
   };
 
-  // サブエージェント名編集開始
   const handleStartEditSubAgentName = (index: number) => {
     setEditingSubAgentIndex(index);
     setEditingSubAgentName(subAgents[index].name);
   };
 
-  // サブエージェント名編集確定
   const handleEditSubAgentName = (index: number) => {
     setSubAgents(subAgents.map((agent, i) =>
       i === index ? { ...agent, name: editingSubAgentName } : agent
@@ -276,13 +233,11 @@ export default function Home() {
     setEditingSubAgentName('');
   };
 
-  // サブエージェント名編集キャンセル
   const handleCancelEditSubAgentName = () => {
     setEditingSubAgentIndex(null);
     setEditingSubAgentName('');
   };
 
-  // サブエージェントのモード変更
   const handleChangeSubAgentMode = (index: number, mode: 'handoff' | 'tool') => {
     setSubAgents(subAgents.map((agent, i) =>
       i === index ? { ...agent, mode } : agent
@@ -310,65 +265,73 @@ export default function Home() {
         </Button>
         
         {/* サイドバー */}
-        <div className={`w-72 bg-slate-800 text-slate-100 h-screen transition-transform duration-300 ease-in-out ${
+        <div className={`w-64 bg-white dark:bg-slate-900 border-r h-screen flex flex-col transition-transform duration-300 ease-in-out ${
           showSidebar ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 fixed md:relative z-40`}>
-          <div className="p-4 flex flex-col h-full">
+          <div className="p-4 border-b">
             <Button 
-              className="w-full mb-4 bg-emerald-600 hover:bg-emerald-700"
               onClick={handleNewConversation}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              + 新しい会話
+              新しい会話
             </Button>
-            
-            <ScrollArea className="flex-1 pr-3">
-              <div className="space-y-2">
-                {conversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    className={`p-2 rounded-md cursor-pointer flex items-center justify-between group ${
-                      currentConversationId === conv.id ? 'bg-slate-700' : 'hover:bg-slate-700/50'
-                    }`}
-                    onClick={() => handleSelectConversation(conv.id)}
-                  >
-                    {editingTitle && editingTitle.id === conv.id ? (
-                      <Input
-                        value={editingTitle.title}
-                        onChange={(e) => setEditingTitle({ ...editingTitle, title: e.target.value })}
-                        onKeyDown={handleUpdateTitle}
-                        autoFocus
-                        className="w-full bg-slate-600 text-slate-100 border-slate-500"
-                      />
-                    ) : (
-                      <>
-                        <span className="truncate flex-1">{conv.title}</span>
-                        <div className="opacity-0 group-hover:opacity-100 flex space-x-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-slate-300 hover:text-slate-100 hover:bg-slate-600"
-                            onClick={(e) => handleStartEditTitle(conv.id, conv.title, e)}
-                          >
-                            ✎
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-slate-300 hover:text-red-400 hover:bg-slate-600"
-                            onClick={(e) => handleDeleteConversation(conv.id, e)}
-                          >
-                            🗑
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
           </div>
+          
+          <ScrollArea className="flex-1">
+            <div className="p-2">
+              {conversations.map((conv) => (
+                <div
+                  key={conv.id}
+                  className={`p-3 rounded-lg cursor-pointer mb-2 group relative ${
+                    conv.id === currentConversationId 
+                      ? 'bg-blue-100 dark:bg-blue-900' 
+                      : 'hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                  onClick={() => handleSelectConversation(conv.id)}
+                >
+                  {editingTitle?.id === conv.id ? (
+                    <Input
+                      value={editingTitle.title}
+                      onChange={(e) => setEditingTitle({ ...editingTitle, title: e.target.value })}
+                      onKeyDown={handleUpdateTitle}
+                      onBlur={() => setEditingTitle(null)}
+                      className="text-sm"
+                      autoFocus
+                    />
+                  ) : (
+                    <>
+                      <div className="text-sm font-medium truncate pr-8">
+                        {conv.title}
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {new Date(conv.updatedAt).toLocaleDateString()}
+                      </div>
+                      <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 flex gap-1">
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-slate-400 hover:text-blue-600"
+                          onClick={(e) => handleStartEditTitle(conv.id, conv.title, e)}
+                        >
+                          ✎
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-6 w-6 text-slate-400 hover:text-red-600"
+                          onClick={(e) => handleDeleteConversation(conv.id, e)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
-        
+
         {/* メインコンテンツ */}
         <main className="flex-1 flex flex-col h-screen overflow-hidden pr-64">
           <CardHeader className="border-b bg-white dark:bg-slate-800 shadow-sm">
@@ -396,40 +359,39 @@ export default function Home() {
                     </div>
                   </div>
                 ))}
+                
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 rounded-2xl px-4 py-3 rounded-bl-none flex items-center">
-                      相談役が考え中...
-                      <span className="ml-2 flex space-x-1">
-                        <span className="animate-bounce delay-0 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
-                        <span className="animate-bounce delay-150 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
-                        <span className="animate-bounce delay-300 h-1.5 w-1.5 bg-slate-500 dark:bg-slate-400 rounded-full"></span>
-                      </span>
+                    <div className="bg-slate-200 dark:bg-slate-700 rounded-2xl rounded-bl-none px-4 py-3">
+                      <div className="flex space-x-1">
+                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce"></div>
+                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                        <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      </div>
                     </div>
                   </div>
                 )}
+                
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
             
-            <CardFooter className="border-t p-4 bg-white dark:bg-slate-800">
-              <div className="flex w-full items-end gap-2">
+            <CardFooter className="border-t bg-white dark:bg-slate-800 p-4">
+              <div className="flex w-full gap-2">
                 <Textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="メッセージを入力..."
-                  className="flex-1 min-h-[60px] max-h-[200px] resize-none"
+                  placeholder="メッセージを入力してください... (Cmd/Ctrl + Enter で送信)"
+                  className="flex-1 min-h-[60px] max-h-[120px] resize-none"
+                  disabled={isTyping}
                 />
                 <Button 
                   onClick={handleSendMessage}
-                  className="bg-blue-600 hover:bg-blue-700"
-                  size="icon"
+                  disabled={!input.trim() || isTyping}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m22 2-7 20-4-9-9-4Z"/>
-                    <path d="M22 2 11 13"/>
-                  </svg>
+                  送信
                 </Button>
               </div>
             </CardFooter>
@@ -456,6 +418,7 @@ export default function Home() {
                 </label>
               ))}
             </div>
+            
             <div className="mb-2 flex items-center justify-between">
               <span className="block text-sm font-medium">サブエージェント</span>
               <Button
