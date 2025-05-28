@@ -7,7 +7,9 @@ import {
   getConversation,
   addMessageToConversation,
   deleteConversation,
-  updateConversationTitle
+  updateConversationTitle,
+  updateConversationSubAgents,
+  SubAgent
 } from '../utils/indexedDB';
 // shadcn/uiコンポーネントのインポート
 import { Button } from "../components/ui/button";
@@ -19,11 +21,6 @@ import { ScrollArea } from "../components/ui/scroll-area";
 type Message = {
   content: string;
   sender: 'user' | 'agent';
-};
-
-type SubAgent = {
-  name: string;
-  mode: 'handoff' | 'tool';
 };
 
 const MODEL_OPTIONS = [
@@ -59,6 +56,7 @@ export default function Home() {
         if (allConversations.length === 0) {
           const newId = await createConversation();
           setCurrentConversationId(newId);
+          setSubAgents([]); // 新規会話はサブエージェントなし
           const newConversations = await getAllConversations();
           setConversations(newConversations);
         } else {
@@ -67,6 +65,8 @@ export default function Home() {
             content: m.content,
             sender: m.sender
           })));
+          // サブエージェント設定を復元
+          setSubAgents(allConversations[0].subAgents || []);
         }
       } catch (error) {
         console.error('会話履歴の読み込みに失敗しました:', error);
@@ -90,6 +90,9 @@ export default function Home() {
         { content: 'よう、兄弟！何か相談したいことがあるなら、遠慮なく言ってくれ！', sender: 'agent' }
       ]);
       
+      // サブエージェント設定をリセット
+      setSubAgents([]);
+      
       const updatedConversations = await getAllConversations();
       setConversations(updatedConversations);
     } catch (error) {
@@ -106,6 +109,9 @@ export default function Home() {
           content: m.content,
           sender: m.sender
         })));
+        
+        // サブエージェント設定を復元
+        setSubAgents(conversation.subAgents || []);
       }
     } catch (error) {
       console.error('会話の読み込みに失敗しました:', error);
@@ -243,6 +249,21 @@ export default function Home() {
       i === index ? { ...agent, mode } : agent
     ));
   };
+
+  // サブエージェント設定が変更されたときに自動保存
+  useEffect(() => {
+    const saveSubAgents = async () => {
+      if (currentConversationId) {
+        try {
+          await updateConversationSubAgents(currentConversationId, subAgents);
+        } catch (error) {
+          console.error('サブエージェント設定の保存に失敗しました:', error);
+        }
+      }
+    };
+    
+    saveSubAgents();
+  }, [subAgents, currentConversationId]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">

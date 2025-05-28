@@ -11,12 +11,19 @@ export type Conversation = {
   messages: Message[];
   createdAt: Date;
   updatedAt: Date;
+  subAgents?: SubAgent[]; // サブエージェント設定を追加
 };
 
 export type Message = {
   content: string;
   sender: 'user' | 'agent';
   timestamp: Date;
+};
+
+// サブエージェント型を追加
+export type SubAgent = {
+  name: string;
+  mode: 'handoff' | 'tool';
 };
 
 // データベース接続を開く
@@ -220,6 +227,43 @@ export const updateConversationTitle = async (id: number, title: string): Promis
       
       updateRequest.onerror = () => {
         reject('タイトルの更新に失敗しました');
+      };
+    };
+    
+    request.onerror = () => {
+      reject('会話の取得に失敗しました');
+    };
+  });
+};
+
+// サブエージェント設定を更新
+export const updateConversationSubAgents = async (id: number, subAgents: SubAgent[]): Promise<void> => {
+  const db = await openDB();
+  
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['conversations'], 'readwrite');
+    const store = transaction.objectStore('conversations');
+    const request = store.get(id);
+    
+    request.onsuccess = (event) => {
+      const conversation = (event.target as IDBRequest).result as Conversation;
+      
+      if (!conversation) {
+        reject('会話が見つかりません');
+        return;
+      }
+      
+      conversation.subAgents = subAgents;
+      conversation.updatedAt = new Date();
+      
+      const updateRequest = store.put(conversation);
+      
+      updateRequest.onsuccess = () => {
+        resolve();
+      };
+      
+      updateRequest.onerror = () => {
+        reject('サブエージェント設定の更新に失敗しました');
       };
     };
     
