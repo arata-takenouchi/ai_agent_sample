@@ -45,11 +45,11 @@ export default async function handler(
     // AIの返答を履歴に追加
     chatHistory.push({
       role: 'assistant',
-      content: reply,
+      content: reply || '',
     });
 
-    // 返答を返す
-    res.status(200).json({ reply });
+    // 返答を返す（nullチェックを追加）
+    res.status(200).json({ reply: reply || 'レスポンスが取得できませんでした' });
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({ error: 'エラーが発生しました' });
