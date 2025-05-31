@@ -9,6 +9,7 @@ import {
   deleteConversation,
   updateConversationTitle,
   updateConversationSubAgents,
+  updateConversationModel,
   SubAgent
 } from '../utils/indexedDB';
 // shadcn/uiコンポーネントのインポート
@@ -57,6 +58,7 @@ export default function Home() {
           const newId = await createConversation();
           setCurrentConversationId(newId);
           setSubAgents([]); // 新規会話はサブエージェントなし
+          setModel("gpt-3.5-turbo"); // デフォルトモデル
           const newConversations = await getAllConversations();
           setConversations(newConversations);
         } else {
@@ -67,6 +69,8 @@ export default function Home() {
           })));
           // サブエージェント設定を復元
           setSubAgents(allConversations[0].subAgents || []);
+          // モデル設定を復元
+          setModel(allConversations[0].model || "gpt-3.5-turbo");
         }
       } catch (error) {
         console.error('会話履歴の読み込みに失敗しました:', error);
@@ -92,6 +96,8 @@ export default function Home() {
       
       // サブエージェント設定をリセット
       setSubAgents([]);
+      // モデル設定をデフォルトに
+      setModel("gpt-3.5-turbo");
       
       const updatedConversations = await getAllConversations();
       setConversations(updatedConversations);
@@ -112,6 +118,8 @@ export default function Home() {
         
         // サブエージェント設定を復元
         setSubAgents(conversation.subAgents || []);
+        // モデル設定を復元
+        setModel(conversation.model || "gpt-3.5-turbo");
       }
     } catch (error) {
       console.error('会話の読み込みに失敗しました:', error);
@@ -264,6 +272,21 @@ export default function Home() {
     
     saveSubAgents();
   }, [subAgents, currentConversationId]);
+
+  // モデル変更時に会話に保存
+  const handleModelChange = async (newModel: string) => {
+    setModel(newModel);
+    
+    if (currentConversationId) {
+      try {
+        await updateConversationModel(currentConversationId, newModel);
+        const updatedConversations = await getAllConversations();
+        setConversations(updatedConversations);
+      } catch (error) {
+        console.error('モデル設定の保存に失敗しました:', error);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -432,7 +455,7 @@ export default function Home() {
                     name="model"
                     value={opt.value}
                     checked={model === opt.value}
-                    onChange={() => setModel(opt.value)}
+                    onChange={() => handleModelChange(opt.value)}
                     className="accent-blue-600"
                   />
                   <span>{opt.label}</span>

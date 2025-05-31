@@ -12,6 +12,7 @@ export type Conversation = {
   createdAt: Date;
   updatedAt: Date;
   subAgents?: SubAgent[]; // サブエージェント設定を追加
+  model?: string; // モデル設定を追加
 };
 
 export type Message = {
@@ -264,6 +265,43 @@ export const updateConversationSubAgents = async (id: number, subAgents: SubAgen
       
       updateRequest.onerror = () => {
         reject('サブエージェント設定の更新に失敗しました');
+      };
+    };
+    
+    request.onerror = () => {
+      reject('会話の取得に失敗しました');
+    };
+  });
+};
+
+// モデル設定を更新する関数を追加
+export const updateConversationModel = async (id: number, model: string): Promise<void> => {
+  const db = await openDB();
+  
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['conversations'], 'readwrite');
+    const store = transaction.objectStore('conversations');
+    const request = store.get(id);
+    
+    request.onsuccess = (event) => {
+      const conversation = (event.target as IDBRequest).result as Conversation;
+      
+      if (!conversation) {
+        reject('会話が見つかりません');
+        return;
+      }
+      
+      conversation.model = model;
+      conversation.updatedAt = new Date();
+      
+      const updateRequest = store.put(conversation);
+      
+      updateRequest.onsuccess = () => {
+        resolve();
+      };
+      
+      updateRequest.onerror = () => {
+        reject('モデル設定の更新に失敗しました');
       };
     };
     
