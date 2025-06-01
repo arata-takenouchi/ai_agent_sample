@@ -26,27 +26,27 @@ export default async function handler(
   }
 
   try {
-    const { message, model, subAgents } = req.body;
+    const { message, model, subAgents, systemPrompt } = req.body;
     
-    // ユーザーメッセージを履歴に追加
-    chatHistory.push({
-      role: 'user',
-      content: message,
-    });
+    // システムプロンプトを含むメッセージ履歴を構築
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
+      {
+        role: 'system',
+        content: systemPrompt || 'あなたは親切で有能なAIアシスタントです。'
+      },
+      {
+        role: 'user',
+        content: message,
+      }
+    ];
 
     // OpenAI APIを呼び出し
     const response = await openai.chat.completions.create({
       model: model || 'gpt-3.5-turbo',
-      messages: chatHistory,
+      messages: messages,
     });
 
     const reply = response.choices[0].message.content;
-
-    // AIの返答を履歴に追加
-    chatHistory.push({
-      role: 'assistant',
-      content: reply || '',
-    });
 
     // 返答を返す（nullチェックを追加）
     res.status(200).json({ reply: reply || 'レスポンスが取得できませんでした' });
