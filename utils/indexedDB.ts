@@ -23,6 +23,8 @@ export type Conversation = {
   createdAt: Date;
   updatedAt: Date;
   agentId: number; // エージェントIDを追加
+  subAgents: SubAgent[];
+  model: string; // モデル設定を追加
 };
 
 export type Message = {
@@ -237,7 +239,9 @@ export const createConversation = async (agentId: number, title: string = '新�
       messages: [],
       createdAt: now,
       updatedAt: now,
-      agentId
+      agentId,
+      model: 'gpt-3.5-turbo',
+      subAgents: []
     };
     
     const request = store.add(conversation);

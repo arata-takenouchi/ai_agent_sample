@@ -5,7 +5,6 @@ import {
   Conversation,
   createAgent,
   getAllAgents,
-  getAgent,
   updateAgent,
   deleteAgent,
   createConversation,
@@ -14,8 +13,8 @@ import {
   addMessageToConversation,
   deleteConversation,
   updateConversationTitle,
-  updateConversationSubAgents,
-  updateConversationModel,
+  // updateConversationSubAgents,
+  // updateConversationModel,
   SubAgent
 } from '../utils/indexedDB';
 // shadcn/uiコンポーネントのインポート
@@ -357,34 +356,34 @@ export default function Home() {
   };
 
   // サブエージェント設定が変更されたときに自動保存
-  useEffect(() => {
-    const saveSubAgents = async () => {
-      if (currentConversationId) {
-        try {
-          await updateConversationSubAgents(currentConversationId, subAgents);
-        } catch (error) {
-          console.error('サブエージェント設定の保存に失敗しました:', error);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const saveSubAgents = async () => {
+  //     if (currentConversationId) {
+  //       try {
+  //         await updateConversationSubAgents(currentConversationId, subAgents);
+  //       } catch (error) {
+  //         console.error('サブエージェント設定の保存に失敗しました:', error);
+  //       }
+  //     }
+  //   };
     
-    saveSubAgents();
-  }, [subAgents, currentConversationId]);
+  //   saveSubAgents();
+  // }, [subAgents, currentConversationId]);
 
   // モデル変更時に会話に保存
-  const handleModelChange = async (newModel: string) => {
-    setModel(newModel);
+  // const handleModelChange = async (newModel: string) => {
+  //   setModel(newModel);
     
-    if (currentConversationId) {
-      try {
-        await updateConversationModel(currentConversationId, newModel);
-        const updatedConversations = await getConversationsByAgent(currentAgent?.id || 0);
-        setConversations(updatedConversations);
-      } catch (error) {
-        console.error('モデル設定の保存に失敗しました:', error);
-      }
-    }
-  };
+  //   if (currentConversationId) {
+  //     try {
+  //       await updateConversationModel(currentConversationId, newModel);
+  //       const updatedConversations = await getConversationsByAgent(currentAgent?.id || 0);
+  //       setConversations(updatedConversations);
+  //     } catch (error) {
+  //       console.error('モデル設定の保存に失敗しました:', error);
+  //     }
+  //   }
+  // };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
