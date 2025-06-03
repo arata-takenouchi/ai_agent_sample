@@ -273,6 +273,10 @@ export default function Home() {
       // データベースに保存
       await addMessageToConversation(currentConversationId, newUserMessage);
 
+      // 現在の会話履歴を取得（システムプロンプトを除く）
+      const currentConversation = await getConversation(currentConversationId);
+      const conversationHistory = currentConversation?.messages || [];
+
       // API呼び出し
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -281,7 +285,8 @@ export default function Home() {
           message: userMessage,
           model: currentAgent.model,
           subAgents: currentAgent.subAgents,
-          systemPrompt: currentAgent.systemPrompt
+          systemPrompt: currentAgent.systemPrompt,
+          conversationHistory: conversationHistory
         }),
       });
 
@@ -440,30 +445,83 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 会話一覧 */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-medium">会話履歴</h3>
-              <Button size="sm" onClick={handleNewConversation}>＋</Button>
-            </div>
-            
-            <ScrollArea className="h-full">
-              <div className="space-y-1">
-                {conversations.map(conversation => (
+          {/* 会話履歴一覧 */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold">会話履歴</h3>
+                <Button size="sm" onClick={handleNewConversation}>
+                  新しい会話
+                </Button>
+              </div>
+              
+              <div className="space-y-2">
+                {conversations.map((conv) => (
                   <div
-                    key={conversation.id}
-                    className={`p-2 rounded cursor-pointer text-sm ${
-                      currentConversationId === conversation.id
-                        ? 'bg-blue-50 dark:bg-blue-900/20'
-                        : 'hover:bg-slate-50 dark:hover:bg-slate-800'
+                    key={conv.id}
+                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
+                      conv.id === currentConversationId
+                        ? 'bg-blue-100 dark:bg-blue-900'
+                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
-                    onClick={() => handleSelectConversation(conversation.id)}
+                    onClick={() => handleSelectConversation(conv.id)}
                   >
-                    {/* existing conversation display code... */}
+                    <div className="flex items-center justify-between">
+                      {editingTitle?.id === conv.id ? (
+                        <input
+                          className="flex-1 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
+                          value={editingTitle.title}
+                          onChange={(e) => setEditingTitle({...editingTitle, title: e.target.value})}
+                          onKeyDown={handleUpdateTitle}
+                          onBlur={() => setEditingTitle(null)}
+                          autoFocus
+                        />
+                      ) : (
+                        <>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">
+                              {conv.title && conv.title !== '新しい会話' 
+                                ? conv.title 
+                                : new Date(conv.createdAt).toLocaleDateString('ja-JP', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                              }
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              {conv.messages.length}件のメッセージ
+                            </div>
+                          </div>
+                          <div className="flex gap-1 ml-2">
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-gray-400 hover:text-blue-500"
+                              onClick={(e) => handleStartEditTitle(conv.id, conv.title, e)}
+                              title="タイトルを編集"
+                            >
+                              ✎
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-6 w-6 text-gray-400 hover:text-red-500"
+                              onClick={(e) => handleDeleteConversation(conv.id, e)}
+                              title="削除"
+                            >
+                              ×
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
 

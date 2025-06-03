@@ -26,19 +26,31 @@ export default async function handler(
   }
 
   try {
-    const { message, model, subAgents, systemPrompt } = req.body;
+    const { message, model, subAgents, systemPrompt, conversationHistory } = req.body;
     
-    // システムプロンプトを含むメッセージ履歴を構築
+    // 会話履歴を構築（システムプロンプト + 過去の会話 + 新しいメッセージ）
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {
         role: 'system',
         content: systemPrompt || 'あなたは親切で有能なAIアシスタントです。'
-      },
-      {
-        role: 'user',
-        content: message,
       }
     ];
+
+    // 過去の会話履歴を追加
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationHistory.forEach((msg: any) => {
+        messages.push({
+          role: msg.sender === 'user' ? 'user' : 'assistant',
+          content: msg.content
+        });
+      });
+    }
+
+    // 新しいユーザーメッセージを追加
+    messages.push({
+      role: 'user',
+      content: message,
+    });
 
     // OpenAI APIを呼び出し
     const response = await openai.chat.completions.create({
