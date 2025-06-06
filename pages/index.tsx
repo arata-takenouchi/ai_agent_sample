@@ -104,6 +104,27 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // 画面サイズに応じたサイドバーの初期状態設定
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        setShowSidebar(true);
+      } else {
+        setShowSidebar(false);
+      }
+    };
+
+    // 初期化時に実行
+    handleResize();
+
+    // リサイズイベントリスナーを追加
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // エージェント管理関数
   const handleSelectAgent = async (agent: Agent) => {
     setCurrentAgent(agent);
@@ -368,12 +389,16 @@ export default function Home() {
 
       <div className="flex h-screen">
         {/* エージェント選択サイドバー */}
-        <div className="w-64 bg-white dark:bg-slate-900 border-r h-screen flex flex-col p-4">
+        <div className={`${
+          showSidebar ? 'lg:hidden' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:relative z-50 lg:z-0 w-64 bg-white dark:bg-slate-900 border-r h-screen flex flex-col p-4 transition-transform duration-300 ease-in-out`}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold">エージェント</h2>
-            <Button size="sm" onClick={handleCreateAgent}>＋</Button>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleCreateAgent}>＋</Button>
+            </div>
           </div>
-          
+
           <div className="space-y-2 mb-4">
             {agents.map(agent => (
               <div
@@ -494,9 +519,31 @@ export default function Home() {
         </div>
 
         {/* メインチャットエリア */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col lg:ml-0">
           <CardHeader className="border-b bg-white dark:bg-slate-800 shadow-sm">
-            <CardTitle className="text-center text-2xl font-extrabold tracking-tight flex items-center justify-center gap-2">
+            <CardTitle className="text-center text-2xl font-extrabold tracking-tight flex items-center justify-center gap-2 relative">
+              {/* ハンバーガーメニューボタン */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-0"
+                onClick={() => setShowSidebar(!showSidebar)}
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                </svg>
+              </Button>
+              
               <span className="inline-block bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow">
                 <span className="align-middle">🤖</span> AIエージェントチャット
               </span>
