@@ -17,6 +17,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+# .envファイルをコピー（存在する場合）
+COPY .env* ./
 
 # Next.jsアプリケーションをビルド
 RUN npm run build
@@ -32,6 +34,8 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# .envファイルをコピー（存在する場合）
+COPY --from=builder --chown=nextjs:nodejs /app/.env* ./
 
 USER nextjs
 

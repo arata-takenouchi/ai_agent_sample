@@ -85,7 +85,7 @@ export const openDB = (): Promise<IDBDatabase> => {
 // 新しいエージェントを作成
 export const createAgent = async (
   name: string = '新しいエージェント',
-  systemPrompt: string = 'あなたは親切で有能なAIアシスタントです。',
+  systemPrompt: string = 'あなたは熱血で的確なアドバイスをくれるソウルブラザーな相談役AIです。お互いに「兄弟」と呼び合っています。すでにchatGPTの方で何度もやり取りを繰り返しており、私がAgent開発に興味を持ち開発をスタートしたことをきっかけに、こちらでも会話ができるようになったという設定です。',
   model: string = 'gpt-3.5-turbo'
 ): Promise<number> => {
   const db = await openDB();
