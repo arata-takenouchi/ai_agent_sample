@@ -66,4 +66,4 @@ export default async function handler(
     console.error('Error:', error);
     res.status(500).json({ error: 'エラーが発生しました' });
   }
-} 
+}
