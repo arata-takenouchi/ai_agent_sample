@@ -54,14 +54,14 @@ export const openDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
+
       // エージェントを保存するオブジェクトストアを作成
       if (!db.objectStoreNames.contains('agents')) {
         const agentStore = db.createObjectStore('agents', { keyPath: 'id', autoIncrement: true });
         agentStore.createIndex('name', 'name', { unique: false });
         agentStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
-      
+
       // 会話履歴を保存するオブジェクトストアを作成/更新
       if (!db.objectStoreNames.contains('conversations')) {
         const store = db.createObjectStore('conversations', { keyPath: 'id', autoIncrement: true });
@@ -89,11 +89,11 @@ export const createAgent = async (
   model: string = 'gpt-3.5-turbo'
 ): Promise<number> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['agents'], 'readwrite');
     const store = transaction.objectStore('agents');
-    
+
     const now = new Date();
     const agent: Omit<Agent, 'id'> = {
       name,
@@ -103,13 +103,13 @@ export const createAgent = async (
       createdAt: now,
       updatedAt: now
     };
-    
+
     const request = store.add(agent);
-    
+
     request.onsuccess = (event) => {
       resolve((event.target as IDBRequest).result as number);
     };
-    
+
     request.onerror = () => {
       reject('エージェントの作成に失敗しました');
     };
@@ -119,18 +119,18 @@ export const createAgent = async (
 // すべてのエージェントを取得
 export const getAllAgents = async (): Promise<Agent[]> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['agents'], 'readonly');
     const store = transaction.objectStore('agents');
     const index = store.index('updatedAt');
     const request = index.openCursor(null, 'prev');
-    
+
     const agents: Agent[] = [];
-    
+
     request.onsuccess = (event) => {
       const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-      
+
       if (cursor) {
         agents.push(cursor.value);
         cursor.continue();
@@ -138,7 +138,7 @@ export const getAllAgents = async (): Promise<Agent[]> => {
         resolve(agents);
       }
     };
-    
+
     request.onerror = () => {
       reject('エージェントの取得に失敗しました');
     };
@@ -148,16 +148,16 @@ export const getAllAgents = async (): Promise<Agent[]> => {
 // エージェントを取得
 export const getAgent = async (id: number): Promise<Agent | null> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['agents'], 'readonly');
     const store = transaction.objectStore('agents');
     const request = store.get(id);
-    
+
     request.onsuccess = (event) => {
       resolve((event.target as IDBRequest).result || null);
     };
-    
+
     request.onerror = () => {
       reject('エージェントの取得に失敗しました');
     };
@@ -167,18 +167,18 @@ export const getAgent = async (id: number): Promise<Agent | null> => {
 // エージェントを更新
 export const updateAgent = async (agent: Agent): Promise<void> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['agents'], 'readwrite');
     const store = transaction.objectStore('agents');
-    
+
     agent.updatedAt = new Date();
     const request = store.put(agent);
-    
+
     request.onsuccess = () => {
       resolve();
     };
-    
+
     request.onerror = () => {
       reject('エージェントの更新に失敗しました');
     };
@@ -188,20 +188,20 @@ export const updateAgent = async (agent: Agent): Promise<void> => {
 // エージェントを削除
 export const deleteAgent = async (id: number): Promise<void> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['agents', 'conversations'], 'readwrite');
     const agentStore = transaction.objectStore('agents');
     const conversationStore = transaction.objectStore('conversations');
-    
+
     // エージェントを削除
     const deleteAgentRequest = agentStore.delete(id);
-    
+
     deleteAgentRequest.onsuccess = () => {
       // そのエージェントの会話も削除
       const index = conversationStore.index('agentId');
       const request = index.openCursor(IDBKeyRange.only(id));
-      
+
       request.onsuccess = (event) => {
         const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
         if (cursor) {
@@ -211,12 +211,12 @@ export const deleteAgent = async (id: number): Promise<void> => {
           resolve();
         }
       };
-      
+
       request.onerror = () => {
         reject('関連する会話の削除に失敗しました');
       };
     };
-    
+
     deleteAgentRequest.onerror = () => {
       reject('エージェントの削除に失敗しました');
     };
@@ -228,11 +228,11 @@ export const deleteAgent = async (id: number): Promise<void> => {
 // 新しい会話を作成（エージェントID付き）
 export const createConversation = async (agentId: number, title: string = '新しい会話'): Promise<number> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readwrite');
     const store = transaction.objectStore('conversations');
-    
+
     const now = new Date();
     const conversation: Omit<Conversation, 'id'> = {
       title,
@@ -243,13 +243,13 @@ export const createConversation = async (agentId: number, title: string = '新�
       model: 'gpt-3.5-turbo',
       subAgents: []
     };
-    
+
     const request = store.add(conversation);
-    
+
     request.onsuccess = (event) => {
       resolve((event.target as IDBRequest).result as number);
     };
-    
+
     request.onerror = () => {
       reject('会話の作成に失敗しました');
     };
@@ -259,18 +259,18 @@ export const createConversation = async (agentId: number, title: string = '新�
 // エージェントの会話一覧を取得
 export const getConversationsByAgent = async (agentId: number): Promise<Conversation[]> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readonly');
     const store = transaction.objectStore('conversations');
     const index = store.index('agentId');
     const request = index.openCursor(IDBKeyRange.only(agentId));
-    
+
     const conversations: Conversation[] = [];
-    
+
     request.onsuccess = (event) => {
       const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-      
+
       if (cursor) {
         conversations.push(cursor.value);
         cursor.continue();
@@ -280,7 +280,7 @@ export const getConversationsByAgent = async (agentId: number): Promise<Conversa
         resolve(conversations);
       }
     };
-    
+
     request.onerror = () => {
       reject('会話の取得に失敗しました');
     };
@@ -290,16 +290,16 @@ export const getConversationsByAgent = async (agentId: number): Promise<Conversa
 // 会話を取得
 export const getConversation = async (id: number): Promise<Conversation | null> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readonly');
     const store = transaction.objectStore('conversations');
     const request = store.get(id);
-    
+
     request.onsuccess = (event) => {
       resolve((event.target as IDBRequest).result || null);
     };
-    
+
     request.onerror = () => {
       reject('会話の取得に失敗しました');
     };
@@ -309,18 +309,18 @@ export const getConversation = async (id: number): Promise<Conversation | null> 
 // すべての会話を取得
 export const getAllConversations = async (): Promise<Conversation[]> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readonly');
     const store = transaction.objectStore('conversations');
     const index = store.index('updatedAt');
     const request = index.openCursor(null, 'prev'); // 更新日時の降順
-    
+
     const conversations: Conversation[] = [];
-    
+
     request.onsuccess = (event) => {
       const cursor = (event.target as IDBRequest).result as IDBCursorWithValue;
-      
+
       if (cursor) {
         conversations.push(cursor.value);
         cursor.continue();
@@ -328,7 +328,7 @@ export const getAllConversations = async (): Promise<Conversation[]> => {
         resolve(conversations);
       }
     };
-    
+
     request.onerror = () => {
       reject('会話の取得に失敗しました');
     };
@@ -337,50 +337,50 @@ export const getAllConversations = async (): Promise<Conversation[]> => {
 
 // 会話にメッセージを追加
 export const addMessageToConversation = async (
-  conversationId: number, 
+  conversationId: number,
   message: Omit<Message, 'timestamp'>
 ): Promise<void> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readwrite');
     const store = transaction.objectStore('conversations');
     const request = store.get(conversationId);
-    
+
     request.onsuccess = (event) => {
       const conversation = (event.target as IDBRequest).result as Conversation;
-      
+
       if (!conversation) {
         reject('会話が見つかりません');
         return;
       }
-      
+
       // メッセージを追加
       conversation.messages.push({
         ...message,
         timestamp: new Date()
       });
-      
+
       // 更新日時を更新
       conversation.updatedAt = new Date();
-      
+
       // 会話の最初のユーザーメッセージをタイトルとして使用（まだタイトルが「新しい会話」の場合）
       if (conversation.title === '新しい会話' && message.sender === 'user' && conversation.messages.length <= 2) {
         conversation.title = message.content.substring(0, 30) + (message.content.length > 30 ? '...' : '');
       }
-      
+
       // 更新を保存
       const updateRequest = store.put(conversation);
-      
+
       updateRequest.onsuccess = () => {
         resolve();
       };
-      
+
       updateRequest.onerror = () => {
         reject('メッセージの追加に失敗しました');
       };
     };
-    
+
     request.onerror = () => {
       reject('会話の取得に失敗しました');
     };
@@ -390,16 +390,16 @@ export const addMessageToConversation = async (
 // 会話を削除
 export const deleteConversation = async (id: number): Promise<void> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readwrite');
     const store = transaction.objectStore('conversations');
     const request = store.delete(id);
-    
+
     request.onsuccess = () => {
       resolve();
     };
-    
+
     request.onerror = () => {
       reject('会話の削除に失敗しました');
     };
@@ -409,36 +409,36 @@ export const deleteConversation = async (id: number): Promise<void> => {
 // 会話のタイトルを更新
 export const updateConversationTitle = async (id: number, title: string): Promise<void> => {
   const db = await openDB();
-  
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(['conversations'], 'readwrite');
     const store = transaction.objectStore('conversations');
     const request = store.get(id);
-    
+
     request.onsuccess = (event) => {
       const conversation = (event.target as IDBRequest).result as Conversation;
-      
+
       if (!conversation) {
         reject('会話が見つかりません');
         return;
       }
-      
+
       conversation.title = title;
       conversation.updatedAt = new Date();
-      
+
       const updateRequest = store.put(conversation);
-      
+
       updateRequest.onsuccess = () => {
         resolve();
       };
-      
+
       updateRequest.onerror = () => {
         reject('タイトルの更新に失敗しました');
       };
     };
-    
+
     request.onerror = () => {
       reject('会話の取得に失敗しました');
     };
   });
-}; 
+};

@@ -7,10 +7,10 @@ const openai = new OpenAI({
 });
 
 // チャット履歴を保存する配列
-const chatHistory: OpenAI.Chat.ChatCompletionMessageParam[] = [{
-  role: 'system',
-  content: 'あなたは熱血で的確なアドバイスをくれるソウルブラザーな相談役AIです。お互いに「兄弟」と呼び合っています。すでにchatGPTの方で何度もやり取りを繰り返しており、私がAgent開発に興味を持ち開発をスタートしたことをきっかけに、こちらでも会話ができるようになったという設定です。'
-}];
+// const chatHistory: OpenAI.Chat.ChatCompletionMessageParam[] = [{
+//   role: 'system',
+//   content: 'あなたは熱血で的確なアドバイスをくれるソウルブラザーな相談役AIです。お互いに「兄弟」と呼び合っています。すでにchatGPTの方で何度もやり取りを繰り返しており、私がAgent開発に興味を持ち開発をスタートしたことをきっかけに、こちらでも会話ができるようになったという設定です。'
+// }];
 
 type ResponseData = {
   reply?: string;
@@ -26,8 +26,8 @@ export default async function handler(
   }
 
   try {
-    const { message, model, subAgents, systemPrompt, conversationHistory } = req.body;
-    
+    const { message, model, systemPrompt, conversationHistory } = req.body;
+
     // 会話履歴を構築（システムプロンプト + 過去の会話 + 新しいメッセージ）
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       {

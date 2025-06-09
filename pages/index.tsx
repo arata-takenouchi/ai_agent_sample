@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import Head from 'next/head';
-import { 
+import {
   Agent,
   Conversation,
   createAgent,
@@ -224,11 +224,9 @@ export default function Home() {
           content: m.content,
           sender: m.sender
         })));
-        
+
         // サブエージェント設定を復元
         setSubAgents(conversation.subAgents || []);
-        // モデル設定を復元
-        setModel(conversation.model || "gpt-3.5-turbo");
       }
     } catch (error) {
       console.error('会話の読み込みに失敗しました:', error);
@@ -237,13 +235,13 @@ export default function Home() {
 
   const handleDeleteConversation = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (window.confirm('この会話を削除してもよろしいですか？')) {
       try {
         await deleteConversation(id);
         const updatedConversations = await getConversationsByAgent(currentAgent?.id || 0);
         setConversations(updatedConversations);
-        
+
         if (id === currentConversationId) {
           if (updatedConversations.length > 0) {
             handleSelectConversation(updatedConversations[0].id);
@@ -314,21 +312,21 @@ export default function Home() {
       if (data.reply) {
         const agentMessage: Message = { content: data.reply, sender: 'agent' };
         setMessages(prev => [...prev, agentMessage]);
-        
+
         await addMessageToConversation(currentConversationId, agentMessage);
-        
+
         // 会話一覧を更新
         const updatedConversations = await getConversationsByAgent(currentAgent.id);
         setConversations(updatedConversations);
       }
     } catch (error) {
       console.error('Error:', error);
-      const errorMessage: Message = { 
-        content: 'すまない、兄弟。何かエラーが起きたようだ。もう一度試してくれ。', 
-        sender: 'agent' 
+      const errorMessage: Message = {
+        content: 'すまない、兄弟。何かエラーが起きたようだ。もう一度試してくれ。',
+        sender: 'agent'
       };
       setMessages(prev => [...prev, errorMessage]);
-      
+
       if (currentConversationId) {
         await addMessageToConversation(currentConversationId, errorMessage);
       }
@@ -345,11 +343,11 @@ export default function Home() {
   };
 
   // サブエージェント管理関数
-  const handleAddSubAgent = () => {
-    if (subAgents.length < 2) {
-      setSubAgents([...subAgents, { name: `サブエージェント${subAgents.length + 1}`, mode: 'handoff' }]);
-    }
-  };
+  // const handleAddSubAgent = () => {
+  //   if (subAgents.length < 2) {
+  //     setSubAgents([...subAgents, { name: `サブエージェント${subAgents.length + 1}`, mode: 'handoff' }]);
+  //   }
+  // };
 
   const handleRemoveSubAgent = (index: number) => {
     setSubAgents(subAgents.filter((_, i) => i !== index));
@@ -447,7 +445,7 @@ export default function Home() {
                   新しい会話
                 </Button>
               </div>
-              
+
               <div className="space-y-2">
                 {conversations.map((conv) => (
                   <div
@@ -543,31 +541,31 @@ export default function Home() {
                   />
                 </svg>
               </Button>
-              
+
               <span className="inline-block bg-gradient-to-r from-emerald-400 via-blue-500 to-purple-500 bg-clip-text text-transparent drop-shadow">
                 <span className="align-middle">🤖</span> AIエージェントチャット
               </span>
             </CardTitle>
           </CardHeader>
-          
+
           <Card className="flex-1 flex flex-col border-0 rounded-none">
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4 pb-4">
                 {messages.map((msg, index) => (
                   <div 
-                    key={index} 
+                    key={index}
                     className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                      msg.sender === 'user' 
-                        ? 'bg-blue-600 text-white rounded-br-none' 
+                      msg.sender === 'user'
+                        ? 'bg-blue-600 text-white rounded-br-none'
                         : 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 rounded-bl-none'
                     }`}>
                       {msg.content}
                     </div>
                   </div>
                 ))}
-                
+
                 {isTyping && (
                   <div className="flex justify-start">
                     <div className="bg-slate-200 dark:bg-slate-700 rounded-2xl rounded-bl-none px-4 py-3">
@@ -579,11 +577,11 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-                
+
                 <div ref={messagesEndRef} />
               </div>
             </ScrollArea>
-            
+
             <CardFooter className="border-t bg-white dark:bg-slate-800 p-4">
               <div className="flex w-full gap-2">
                 <Textarea
@@ -594,7 +592,7 @@ export default function Home() {
                   className="flex-1 min-h-[60px] max-h-[120px] resize-none"
                   disabled={isTyping}
                 />
-                <Button 
+                <Button
                   onClick={handleSendMessage}
                   disabled={!input.trim() || isTyping}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6"
@@ -611,7 +609,7 @@ export default function Home() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-lg w-96 max-h-[80vh] overflow-y-auto">
               <h3 className="text-lg font-bold mb-4">エージェント編集</h3>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">名前</label>
@@ -620,7 +618,7 @@ export default function Home() {
                     onChange={(e) => setEditingAgent({...editingAgent, name: e.target.value})}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">システムプロンプト</label>
                   <Textarea
@@ -629,7 +627,7 @@ export default function Home() {
                     rows={4}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">モデル</label>
                   <select
@@ -642,7 +640,7 @@ export default function Home() {
                     ))}
                   </select>
                 </div>
-                
+
                 {/* サブエージェント設定 */}
                 <div>
                   <label className="block text-sm font-medium mb-1">サブエージェント</label>
@@ -708,7 +706,7 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex gap-2 mt-6">
                 <Button onClick={() => handleUpdateAgent(editingAgent)}>保存</Button>
                 <Button variant="outline" onClick={() => setEditingAgent(null)}>キャンセル</Button>
@@ -719,4 +717,4 @@ export default function Home() {
       </div>
     </div>
   );
-} 
+}
