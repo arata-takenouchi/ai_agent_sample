@@ -142,7 +142,7 @@ export default function Home() {
       const conversationId = await createConversation(agent.id);
       setCurrentConversationId(conversationId);
       setMessages([
-        { content: 'こんにちは！何かお手伝いできることはありますか？', sender: 'agent' }
+        { content: 'おう兄弟！何か手伝うことはあるか？', sender: 'agent' }
       ]);
       const updatedConversations = await getConversationsByAgent(agent.id);
       setConversations(updatedConversations);
@@ -205,7 +205,7 @@ export default function Home() {
       const newId = await createConversation(currentAgent.id);
       setCurrentConversationId(newId);
       setMessages([
-        { content: 'こんにちは！何かお手伝いできることはありますか？', sender: 'agent' }
+        { content: 'おう兄弟！何か手伝うことはあるか？', sender: 'agent' }
       ]);
       
       const updatedConversations = await getConversationsByAgent(currentAgent.id);

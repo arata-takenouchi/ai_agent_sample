@@ -223,8 +223,6 @@ export const deleteAgent = async (id: number): Promise<void> => {
   });
 };
 
-// 会話関連の関数を更新
-
 // 新しい会話を作成（エージェントID付き）
 export const createConversation = async (agentId: number, title: string = '新しい会話'): Promise<number> => {
   const db = await openDB();
